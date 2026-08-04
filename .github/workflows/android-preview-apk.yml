@@ -71,7 +71,7 @@ jobs:
             echo "stable-preview-key" > artifact/signing-mode.txt
           else
             echo "ephemeral-android-debug-key" > artifact/signing-mode.txt
-            echo "The distributed bootstrap is re-signed offline with the permanent preview key." >> artifact/signing-mode.txt
+            echo "The published update is re-signed offline with the permanent preview key." >> artifact/signing-mode.txt
           fi
 
       - name: Validate project and build APK
@@ -82,14 +82,14 @@ jobs:
       - name: Verify APK identity and updater boundary
         shell: bash
         run: |
-          APK="artifact/Khaos-Nexus-Mobile-Companion-0.2.2-preview.apk"
+          APK="artifact/Khaos-Nexus-Mobile-Companion-0.2.3-preview.apk"
           cp app/build/outputs/apk/debug/app-debug.apk "$APK"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | tee artifact/apk-badging.txt
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$APK" | tee artifact/apk-permissions.txt
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee artifact/apk-signing.txt
           grep -q "package: name='com.khaoskrew.nexuscompanion.preview'" artifact/apk-badging.txt
-          grep -q "versionCode='4'" artifact/apk-badging.txt
-          grep -q "versionName='0.2.2-preview-debug'" artifact/apk-badging.txt
+          grep -q "versionCode='5'" artifact/apk-badging.txt
+          grep -q "versionName='0.2.3-preview-debug'" artifact/apk-badging.txt
           grep -q "sdkVersion:'26'" artifact/apk-badging.txt
           grep -q "android.permission.INTERNET" artifact/apk-permissions.txt
           grep -q "android.permission.REQUEST_INSTALL_PACKAGES" artifact/apk-permissions.txt
@@ -101,8 +101,7 @@ jobs:
           mkdir -p artifact/android-signing-tools/lib
           cp "$ANDROID_HOME/build-tools/36.0.0/apksigner" artifact/android-signing-tools/
           cp "$ANDROID_HOME/build-tools/36.0.0/lib/apksigner.jar" artifact/android-signing-tools/lib/
-          cp "$ANDROID_HOME/build-tools/36.0.0/zipalign" artifact/android-signing-tools/
-          chmod +x artifact/android-signing-tools/apksigner artifact/android-signing-tools/zipalign
+          chmod +x artifact/android-signing-tools/apksigner
 
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
