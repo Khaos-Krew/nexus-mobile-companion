@@ -16,7 +16,7 @@ public final class SessionCoordinator {
     public SessionSnapshot restore(long nowEpochSeconds, long clockSkewSeconds) {
         try {
             Optional<SessionTokens> restored = store.load();
-            if (restored.isEmpty()) {
+            if (!restored.isPresent()) {
                 stateMachine.signOut();
             } else if (!stateMachine.restoreForRefresh(
                 restored.get(),
