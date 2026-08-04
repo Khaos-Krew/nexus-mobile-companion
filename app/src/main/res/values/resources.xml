@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Khaos Nexus Mobile</string>
+
+    <color name="nexus_black">#050609</color>
+    <color name="nexus_charcoal">#0B0D12</color>
+    <color name="nexus_ruby">#D71936</color>
+    <color name="nexus_crimson">#FF3556</color>
+
+    <style name="Theme.KhaosNexusMobile" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@color/nexus_black</item>
+        <item name="android:navigationBarColor">@color/nexus_black</item>
+        <item name="android:colorAccent">@color/nexus_crimson</item>
+        <item name="android:windowBackground">@color/nexus_black</item>
+    </style>
+</resources>

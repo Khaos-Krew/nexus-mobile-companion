@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Direct preview builds may check an approved HTTPS update channel. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+      Debug preview builds are distributed outside Google Play. Installation is always
+      initiated by the user and completed by Android's system installer. Play builds
+      must not merge this debug-only permission.
+    -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+</manifest>
