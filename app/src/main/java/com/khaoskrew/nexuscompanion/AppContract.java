@@ -16,7 +16,7 @@ public final class AppContract {
     public static final boolean PREVIEW_MODE = true;
     public static final boolean NETWORK_ENABLED = false;
     public static final boolean PRIVILEGED_ACTIONS_ENABLED = false;
-    public static final String VERSION_LABEL = "0.2.0 Preview";
+    public static final String VERSION_LABEL = "0.2.1 Preview";
 
     public static final List<Destination> DESTINATIONS = Collections.unmodifiableList(Arrays.asList(
         new Destination("home", "Home", "⌂"),

@@ -85,13 +85,14 @@ jobs:
       - name: Verify APK identity and updater boundary
         shell: bash
         run: |
-          APK="artifact/Khaos-Nexus-Mobile-Companion-0.2.0-preview.apk"
+          APK="artifact/Khaos-Nexus-Mobile-Companion-0.2.1-preview.apk"
           cp app/build/outputs/apk/debug/app-debug.apk "$APK"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | tee artifact/apk-badging.txt
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$APK" | tee artifact/apk-permissions.txt
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee artifact/apk-signing.txt
           grep -q "package: name='com.khaoskrew.nexuscompanion.preview'" artifact/apk-badging.txt
-          grep -q "versionCode='2'" artifact/apk-badging.txt
+          grep -q "versionCode='3'" artifact/apk-badging.txt
+          grep -q "versionName='0.2.1-preview-debug'" artifact/apk-badging.txt
           grep -q "sdkVersion:'26'" artifact/apk-badging.txt
           grep -q "android.permission.INTERNET" artifact/apk-permissions.txt
           grep -q "android.permission.REQUEST_INSTALL_PACKAGES" artifact/apk-permissions.txt
