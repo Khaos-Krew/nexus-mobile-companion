@@ -86,6 +86,9 @@ android {
         abortOnError = true
         checkDependencies = true
         checkReleaseBuilds = false
+        // UpdateGateActivity deliberately opts out of predictive back so its
+        // existing Activity.onBackPressed path remains active on API 26+.
+        disable += "GestureBackNavigation"
     }
 
     testOptions {
