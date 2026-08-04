@@ -1,6 +1,8 @@
 name: Android Preview APK
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -30,6 +32,13 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+
+      - name: Record source revision
+        shell: bash
+        run: |
+          mkdir -p artifact
+          printf '%s\n' "$GITHUB_SHA" > artifact/source-commit.txt
+          printf '%s\n' "$GITHUB_REF" > artifact/source-ref.txt
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
