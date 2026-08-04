@@ -12,12 +12,14 @@ Build the first Khaos Nexus Mobile Companion APK as a dependency-light native An
 - Android Gradle Plugin 9.3.0;
 - Gradle 9.5.0;
 - JDK 17;
-- Android compile/target API 37;
+- Android compile/target API 36;
 - Android minimum API 26;
 - Java 17 source;
 - standard Android platform widgets and Canvas rendering;
 - JUnit 4 tests;
 - GitHub Actions for reproducible debug APK generation.
+
+API 36 is used because it is available from the stable Android SDK channel on the clean GitHub Actions runner. This avoids depending on a preview SDK package while retaining Android 8.0+ device compatibility.
 
 The first APK is an offline-safe user-interface and device-validation foundation. It does not request Android network permission and contains no live backend endpoint, credential, privileged action implementation, scheduler, Discord client, RCON client, hosting-provider client, database service-role client, or AI runtime.
 
