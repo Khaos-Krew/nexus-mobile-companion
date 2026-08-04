@@ -1,0 +1,68 @@
+name: Android Preview APK
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    name: Build installable APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android API 37
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-37" "build-tools;36.0.0" "platform-tools"
+
+      - name: Set up Gradle 9.5
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Validate project and build APK
+        shell: bash
+        run: |
+          gradle --no-daemon --stacktrace clean testDebugUnitTest lintDebug assembleDebug
+
+      - name: Verify APK identity
+        shell: bash
+        run: |
+          mkdir -p artifact
+          cp app/build/outputs/apk/debug/app-debug.apk artifact/Khaos-Nexus-Mobile-Companion-0.1.0-preview.apk
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging artifact/Khaos-Nexus-Mobile-Companion-0.1.0-preview.apk | tee artifact/apk-badging.txt
+          grep -q "package: name='com.khaoskrew.nexuscompanion.preview'" artifact/apk-badging.txt
+          grep -q "sdkVersion:'26'" artifact/apk-badging.txt
+          sha256sum artifact/Khaos-Nexus-Mobile-Companion-0.1.0-preview.apk | tee artifact/SHA256SUMS.txt
+
+      - name: Upload installable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Khaos-Nexus-Mobile-Companion-APK
+          path: artifact/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
