@@ -1,27 +1,28 @@
 name: Assemble staged signed update APK
 
 on:
-  push:
-    branches: [release/preview-0.2.3-update]
-    paths:
-      - updates/staging/READY
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
   assemble:
+    if: github.head_ref == 'release/preview-0.2.3-update'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: release/preview-0.2.3-update
           fetch-depth: 0
 
       - name: Reconstruct and verify signed APK
         shell: bash
         run: |
           set -euo pipefail
+          test -f updates/staging/READY
           OUTPUT="updates/preview/Khaos-Nexus-Mobile-Companion-current.apk"
           cat updates/staging/chunk-*.b64 | tr -d '\n\r' | base64 --decode > "$OUTPUT"
           echo "393418fd9e53ca91d9ffadbc64bd863acab270aaf0cd2994fe85db409d5abed1  $OUTPUT" | sha256sum --check --strict
