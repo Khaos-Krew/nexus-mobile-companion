@@ -1,0 +1,13 @@
+{
+  "contractVersion": 1,
+  "tokenType": "Bearer",
+  "accessToken": "fixture-access-token-not-valid",
+  "refreshToken": "fixture-refresh-token-not-valid",
+  "accessExpiresAt": "2026-08-04T22:15:00Z",
+  "refreshExpiresAt": "2026-09-03T22:00:00Z",
+  "deviceSessionId": "fixture-device-session",
+  "subjectId": "fixture-account-subject",
+  "rotationCounter": 0,
+  "capabilityBootstrap": "capability-bootstrap-v1.json",
+  "auditReference": "fixture-audit-reference"
+}
