@@ -43,17 +43,18 @@ public final class UpdateInstaller {
         }
 
         int sessionId = installer.createSession(params);
-        try (PackageInstaller.Session session = installer.openSession(sessionId);
-             FileInputStream input = new FileInputStream(apk);
-             OutputStream output = session.openWrite("base.apk", 0, apk.length())) {
-            byte[] buffer = new byte[64 * 1024];
-            int read;
-            while ((read = input.read(buffer)) >= 0) {
-                if (read > 0) {
-                    output.write(buffer, 0, read);
+        try (PackageInstaller.Session session = installer.openSession(sessionId)) {
+            try (FileInputStream input = new FileInputStream(apk);
+                 OutputStream output = session.openWrite("base.apk", 0, apk.length())) {
+                byte[] buffer = new byte[64 * 1024];
+                int read;
+                while ((read = input.read(buffer)) >= 0) {
+                    if (read > 0) {
+                        output.write(buffer, 0, read);
+                    }
                 }
+                session.fsync(output);
             }
-            session.fsync(output);
 
             Intent resultIntent = new Intent(context, UpdateInstallReceiver.class);
             resultIntent.setAction(UpdateInstallReceiver.ACTION_INSTALL_STATUS);
