@@ -1,282 +1,228 @@
 # Khaos Nexus Mobile Companion
 
-Khaos Nexus Mobile Companion is the dedicated mobile client for the Khaos Nexus platform. This repository is the exclusive home for mobile-only planning and future mobile implementation.
+Khaos Nexus Mobile Companion is the dedicated Android client for the Khaos Nexus platform. This repository is the exclusive home for mobile-only code, planning, CI, and future mobile releases.
 
-The Windows desktop application remains in [`Khaos-Krew/Khaos-Nexus`](https://github.com/Khaos-Krew/Khaos-Nexus). The mobile companion extends that platform; it does not replace the desktop application or duplicate its services.
+The Windows desktop application remains in [`Khaos-Krew/Khaos-Nexus`](https://github.com/Khaos-Krew/Khaos-Nexus). Mobile extends that platform; it does not replace the desktop application or duplicate its authority.
 
 ## Current status
 
-**Planning only. No mobile implementation, release build, deployment, or published mobile artifact exists yet.**
+**An installable offline Android preview is under active implementation in issue #9 and branch `foundation/android-preview-apk`.**
 
-The desktop UI baseline required before mobile planning was completed and merged in Khaos Nexus PR #194 at merge commit `0971f81b3264ce66a106a0ace129596e31c5ef62`.
+The first APK provides:
 
-All future mobile branches and pull requests must be created in this repository and target this repository's `main` branch. Mobile-only code must not be added to `Khaos-Krew/Khaos-Nexus`.
+- a native Android application shell;
+- the Khaos Nexus black, charcoal, onyx, ruby, and crimson visual identity;
+- Home, D&D, Servers, Nexus AI, Notifications, and Settings navigation;
+- local fixture data for device and usability testing;
+- visibly locked privileged actions;
+- unit tests, Android lint, APK identity verification, and SHA-256 generation;
+- workflow-artifact-only APK distribution.
+
+It intentionally does **not** connect to production services. The manifest requests no network permission and the source contains no production endpoint, desktop credential, Discord bot token, RCON password, provider key, AI token, scheduler, or signing key.
+
+The required desktop UI baseline was completed in Khaos Nexus PR #194 at merge commit `0971f81b3264ce66a106a0ace129596e31c5ef62`.
+
+## Installable preview boundary
+
+The Owner authorized creation of an installable APK on August 4, 2026. This authorization covers a GitHub Actions debug artifact for direct testing only.
+
+It does not authorize:
+
+- a GitHub Release or tag;
+- Play Store, Firebase, enterprise, or website distribution;
+- production or staging deployment;
+- a release signing key;
+- live remote administration;
+- updater or release-channel publication.
+
+The debug APK uses the standard Android debug signature. Android may ask the tester to allow installation from the app used to open the APK.
+
+## Android toolchain
+
+The first preview uses a dependency-light native Android stack:
+
+- Android Gradle Plugin 9.3.0;
+- Gradle 9.5.0;
+- JDK 17;
+- compile and target API 37;
+- minimum API 26 / Android 8.0;
+- Java 17 source;
+- standard Android platform widgets and Canvas graphics;
+- JUnit 4 tests.
+
+See [`docs/ADR-0001-native-android-preview.md`](docs/ADR-0001-native-android-preview.md) for the decision, rejected alternatives, and security contract.
+
+## Build locally
+
+Prerequisites:
+
+- JDK 17;
+- Android SDK platform 37;
+- Android build tools 36.0.0;
+- Gradle 9.5.0.
+
+Run:
+
+```bash
+gradle --no-daemon clean testDebugUnitTest lintDebug assembleDebug
+```
+
+The APK is created at:
+
+```text
+app/build/outputs/apk/debug/app-debug.apk
+```
+
+The debug package identifier is:
+
+```text
+com.khaoskrew.nexuscompanion.preview
+```
+
+## GitHub Actions APK
+
+Pull requests to `main` run `.github/workflows/android-preview-apk.yml`.
+
+The workflow:
+
+1. installs JDK 17, Android API 37, build tools 36.0.0, and Gradle 9.5.0;
+2. runs unit tests and Android lint;
+3. assembles the debug APK;
+4. verifies package identity and minimum SDK with `aapt`;
+5. generates `SHA256SUMS.txt`;
+6. uploads `Khaos-Nexus-Mobile-Companion-APK` as a temporary GitHub Actions artifact.
+
+No release is created by the workflow.
 
 ## Product purpose
 
-The mobile companion provides secure, focused access to selected Khaos Nexus capabilities when the user is away from the Windows desktop. It is intended for monitoring, notifications, lightweight review and approval, D&D table support, and explicitly authorized remote actions.
+The companion provides secure, focused access to selected Khaos Nexus capabilities away from the Windows desktop:
 
-The desktop application remains the primary administration and production-control surface for initial configuration, protected credentials, high-risk operations, service supervision, release management, and complex module editing.
+- monitoring and notifications;
+- lightweight review and approval;
+- D&D table support;
+- read-only server health;
+- explicitly authorized guarded actions;
+- Nexus AI health and advisory review.
 
-## Relationship to Khaos Nexus desktop
+The desktop application remains the primary administration surface for credentials, complex setup, service supervision, release management, scheduler authoring, and high-risk operations.
 
-The mobile app consumes approved shared contracts and services owned by the Khaos Nexus platform:
+## Navigation
 
-- shared backend and normalized API contracts;
-- existing authentication and account linking;
-- global roles, campaign roles, module gates, and authorization policies;
-- existing audit records and notification routing;
-- existing Discord Bot, D&D, game-server, scheduler, and AI service authorities;
-- shared module identifiers, capability negotiation, and safe projections.
+### Home
 
-The mobile app must not introduce a second scheduler, AI runtime, Discord bot/router, game-server adapter, updater, credential store, campaign database, or permission model.
+Health summaries, pending approvals, upcoming activity, security status, and quick links.
+
+### D&D
+
+Campaigns, characters, sessions, encounters, maps, dice, notes, and reviewed AI-assisted proposals. The preview uses local fixtures only.
+
+### Servers
+
+Read-only status and future guarded command workflows for ARK, Palworld, Minecraft, and other approved modules. Mobile never connects to RCON or providers directly.
+
+### Nexus AI
+
+Separate D&D AI and Nexus AI Core health and review surfaces. The mobile app does not host either AI runtime and cannot execute AI-generated maintenance automatically.
+
+### Notifications
+
+A safe actionable inbox. Future push payloads must be minimal and non-secret; authorized details are fetched only after authentication.
+
+### Settings
+
+Account, devices, notification preferences, privacy, security, diagnostics, accessibility, and build information.
+
+Navigation visibility will become capability-driven when authentication and the shared mobile API are implemented.
 
 ## Architecture boundaries
 
 ### Mobile responsibilities
 
-- Render mobile-optimized navigation and module views.
-- Authenticate the user and maintain a revocable mobile session.
-- Request bounded, role-filtered data from shared services.
-- Cache only explicitly approved, non-secret data for offline use.
-- Register a mobile device and push-notification token.
-- Submit explicit commands or approvals through authoritative backend APIs.
-- Show action status, audit references, conflicts, and retryable failures.
+- Render mobile-optimized views.
+- Authenticate through an approved system-browser PKCE flow.
+- Maintain a revocable device session in platform secure storage.
+- Request bounded, role-filtered projections.
+- Cache only explicitly approved non-secret data.
+- Submit commands and approvals through authoritative backend APIs.
+- Show action state, audit references, conflicts, expiry, and retryable failures.
 
-### Desktop and shared-service responsibilities
+### Shared platform responsibilities
 
-- Own protected provider credentials, Discord bot tokens, server passwords, AI service tokens, and updater credentials.
-- Own scheduler execution, AI processes, Discord interactions, game-server commands, module configuration, and authoritative state mutation.
-- Enforce permissions and revalidate every mobile request server-side.
-- Produce audit events and notification events.
-- Apply rate limits, idempotency, conflict detection, and action confirmation rules.
+Khaos Nexus desktop and backend services continue to own:
+
+- protected credentials;
+- Discord interactions and registered bots;
+- scheduler execution;
+- game-server adapters and commands;
+- AI runtimes and provider access;
+- campaign authority and permission checks;
+- audit and notification routing;
+- updater and release publication.
 
 ### Prohibited mobile behavior
 
-- Direct RCON, provider, Discord, Supabase service-role, or AI sidecar connections from the mobile client.
-- Storing desktop credentials, bot tokens, server passwords, provider keys, or AI service tokens.
+- Direct RCON, hosting-provider, Discord, Supabase service-role, or AI-sidecar connections.
+- Embedded desktop credentials, bot tokens, server passwords, provider keys, or AI tokens.
+- A second scheduler, AI router, Discord bot, notification engine, updater, or permission model.
 - Background autonomous administration.
-- Executing maintenance proposals without explicit authorization.
-- Creating a mobile-owned scheduler or duplicated notification engine.
-- Publishing release builds without separate Owner authorization.
-
-## Planned navigation
-
-The planned shell follows the completed desktop information architecture while remaining mobile-first:
-
-1. **Home** — alerts, health summaries, pending approvals, upcoming events, and recent activity.
-2. **D&D** — campaigns, characters, sessions, encounters, maps, dice, notes, and approved AI-assisted proposals.
-3. **Servers** — status, players, scheduled operations, warnings, and tightly controlled actions.
-4. **Nexus AI** — service health, monitor findings, advisory proposals, and review-only workflows.
-5. **Community** — Discord-linked announcements, tickets, events, and approved community tools.
-6. **Notifications** — actionable inbox with deep links and audit context.
-7. **Settings** — account, devices, notification preferences, security, diagnostics, and app information.
-
-Navigation visibility must be capability-driven. Hidden or disabled modules must not appear as usable destinations.
-
-## Supported and planned modules
-
-### Initial supported scope
-
-- Account sign-in, device registration, session management, and role-aware navigation.
-- Home dashboard and notification inbox.
-- Read-only platform, Discord, and game-server health.
-- D&D campaign list, campaign overview, characters, upcoming sessions, session notes, dice history, and player-safe map views.
-- Explicitly authorized low-risk actions with confirmation, idempotency, audit evidence, and server-side revalidation.
-- Offline access to selected recent D&D and notification data.
-
-### Later phases
-
-- Encounter participation and turn-aware D&D controls.
-- Push-driven server warnings and status changes.
-- Owner/admin approval workflows for guarded server operations.
-- Nexus AI monitor findings and advisory plan review.
-- Community events, tickets, polls, and announcements.
-- Module-specific mobile surfaces for ARK, Palworld, Minecraft, Warframe, and IdleOn where authoritative shared APIs exist.
-
-### Desktop-only by default
-
-- Initial bot and provider credential setup.
-- Full server/module configuration.
-- Scheduler creation and complex automation editing.
-- AI provider and sidecar configuration.
-- Release, updater, rollback, and publication controls.
-- High-risk bulk moderation or destructive operations.
-
-Any later mobile exposure of a desktop-only capability requires a separate security review and explicit Owner approval.
-
-## Authentication and security
-
-- Use the existing Khaos Nexus account and Discord-linked identity model.
-- Prefer authorization-code flow with PKCE and system-browser authentication.
-- Store refresh credentials only in platform secure storage; never in plaintext preferences, logs, analytics, crash reports, backups, or source control.
-- Use short-lived access tokens, refresh-token rotation, device revocation, and bounded session lifetimes.
-- Require step-up confirmation for guarded actions.
-- Revalidate roles, campaign membership, module gates, channel authorization, and action scope on every request.
-- Use certificate-valid HTTPS only outside local development.
-- Redact identifiers and protected values from logs and diagnostics.
-- Support remote session revocation from desktop/account administration.
-
-## API boundary
-
-The mobile client uses a versioned mobile-facing API or backend-for-frontend contract built over existing platform services.
-
-Required properties:
-
-- normalized, least-privilege response models;
-- no direct database table access from untrusted client code unless protected by reviewed row-level security and the same normalized contract;
-- cursor pagination and bounded payload sizes;
-- idempotency keys for commands;
-- optimistic-concurrency tokens or entity revisions for edits;
-- explicit action state: accepted, queued, running, succeeded, failed, cancelled, or expired;
-- structured permission and capability errors;
-- audit-event identifiers returned for mutations;
-- stable deep-link identifiers that contain no secrets;
-- compatibility negotiation between mobile and desktop/backend versions.
+- Silent execution of maintenance or AI proposals.
 
 ## Offline behavior
 
-Offline mode is intentionally limited:
+The preview is fully offline. Later offline support remains intentionally limited:
 
-- Cache an encrypted, size-bounded subset of recent user-approved data.
-- Default offline content to read-only.
-- Never cache secrets, private GM data without explicit authorization, server credentials, service tokens, raw audit payloads, or hidden Discord data.
-- Queue only operations explicitly declared offline-safe.
-- Show stale timestamps and connection state clearly.
-- Resolve conflicts using server revisions; never silently overwrite authoritative state.
-- Allow the user to clear cached data and revoke the device.
+- encrypted and size-bounded cache;
+- read-only by default;
+- stale timestamps and clear connection state;
+- no secrets, raw audit payloads, protected GM data, or hidden Discord data;
+- server revisions for conflict handling;
+- explicit cache clearing and device revocation.
 
-## Push notifications
+## Planned implementation sequence
 
-Push delivery is an output of the shared Khaos Nexus notification system, not a new mobile scheduler.
+1. **Android preview foundation** — current issue #9.
+2. **Authentication and device sessions** — PKCE, secure storage, registration, capability bootstrap, revocation.
+3. **Home, notifications, and deep links** — shared notification registration and safe detail fetch.
+4. **D&D read-only and offline** — player-safe projections and encrypted bounded cache.
+5. **Server status and guarded actions** — server-side authorization, confirmation, idempotency, expiry, and audit.
+6. **Nexus AI review** — health, findings, and advisory plan review only.
+7. **Hardening** — accessibility, observability, security, performance, and real-device coverage.
+8. **Release preparation** — only after separate explicit Owner authorization.
 
-Planned notification classes:
+## Testing and release gates
 
-- server offline/online and restart warnings;
-- failed scheduled operations;
-- D&D session reminders and encounter-turn prompts;
-- moderation or ticket assignments;
-- Nexus AI monitor findings requiring review;
-- security events, device sign-in, and session revocation.
+Before any distributed preview or production release:
 
-Every push payload must be minimal, non-secret, and safe for lock-screen display. The app fetches authorized detail after opening. Notification preferences and quiet hours are stored through shared account services.
+- exact source commit and dependency baselines are recorded;
+- unit, contract, integration, UI, lint, accessibility, and security checks pass;
+- no protected credential enters the bundle, logs, diagnostics, notifications, analytics, or backups;
+- authentication, revocation, offline deletion, deep links, push behavior, upgrades, and failure recovery pass real-device testing;
+- shared API compatibility is verified against an approved Khaos Nexus baseline;
+- signing, release notes, hashes, rollback, and distribution channel receive explicit approval.
 
-## Development workflow
+A merged feature branch or successful APK artifact is not a public release.
 
-1. Production Control assigns one GitHub issue, exact starting commit, branch, pull request target, dependencies, and release boundary.
-2. Each implementation branch starts from the latest approved `main` commit in this repository.
-3. Branch naming should use scoped prefixes such as `foundation/`, `feature/`, `integration/`, `test/`, or `docs/`.
-4. Open a draft pull request before material implementation.
-5. Keep each pull request focused on one vertical slice.
-6. Document shared-contract dependencies on `Khaos-Krew/Khaos-Nexus` without placing mobile code there.
-7. Require tests, security review, accessibility review, and release validation before merge.
-8. Squash or merge according to repository policy while preserving issue and exact-head evidence.
+## Repository workflow
 
-## Planned branch and pull-request sequence
+- All mobile branches and pull requests target this repository's `main` branch.
+- Mobile-only code must not be added to `Khaos-Krew/Khaos-Nexus`.
+- Production Control assigns an issue, exact starting commit, branch, dependencies, and release boundary.
+- Pull requests remain focused on one vertical slice and include tests and documentation.
+- Missing shared APIs are tracked in the desktop/backend repository, while mobile implementation stays here.
 
-1. `foundation/mobile-architecture-and-toolchain` — app shell, build system, environment contract, linting, tests, and secure configuration placeholders.
-2. `feature/auth-device-session` — authentication, secure token storage, device registration, revocation, and capability bootstrap.
-3. `feature/navigation-home-notifications` — role-aware navigation, Home, notification inbox, deep links, and push registration.
-4. `feature/dnd-readonly-offline` — campaign and character read views, session data, player-safe maps, and encrypted bounded cache.
-5. `feature/server-status-guarded-actions` — server status and approved low-risk command workflow.
-6. `feature/nexus-ai-review` — AI health, monitor findings, and advisory review without autonomous execution.
-7. `integration/mobile-observability-hardening` — diagnostics, audit correlation, security hardening, accessibility, performance, and end-to-end tests.
-8. `release/mobile-preview-candidate` — release preparation only after separate Owner authorization.
+## Related planning issues
 
-Parallel branches must not modify the same architectural contract without a recorded coordination decision.
-
-## Testing strategy
-
-- Unit tests for domain models, permissions, redaction, offline cache rules, deep links, and state reducers.
-- Contract tests against versioned Khaos Nexus API fixtures.
-- Authentication tests for PKCE, token rotation, revocation, expiry, and secure-storage failure.
-- UI tests for navigation visibility, accessibility, loading, empty, denied, stale, and error states.
-- Integration tests for push registration, notification detail fetch, idempotent commands, audit correlation, and conflict handling.
-- Offline tests for encryption, cache limits, stale labeling, reconnect, conflict resolution, and cache clearing.
-- Security tests ensuring no protected credentials enter app bundles, logs, analytics, notifications, screenshots where protected, or backups.
-- Android and iOS build validation when each platform enters supported scope.
-- Real-device validation on supported OS versions before any preview publication.
-
-## Release gates
-
-No mobile build may be published until separately authorized and all applicable gates pass:
-
-- exact source commit recorded;
-- dependency and secret scans pass;
-- unit, contract, integration, UI, and accessibility tests pass;
-- platform builds and signing configuration are verified without exposing signing secrets;
-- privacy disclosures and notification behavior are reviewed;
-- authentication, device revocation, offline data deletion, and upgrade behavior pass real-device testing;
-- shared API compatibility is confirmed against the approved Khaos Nexus desktop/backend baseline;
-- rollback or kill-switch strategy is documented;
-- release notes, artifact hashes, and distribution channel are explicitly approved.
-
-Preview, beta, store, enterprise, and production publication are separate authorization decisions.
-
-## Roadmap
-
-### Phase 0 — Planning and contracts
-
-- Confirm product scope, architecture boundaries, platforms, API ownership, and security model.
-- Inventory reusable Khaos Nexus services and missing mobile-safe contracts.
-- Establish issue sequence, acceptance criteria, test strategy, and release policy.
-
-### Phase 1 — Foundation
-
-- Select and initialize the mobile toolchain.
-- Add app shell, design tokens, navigation foundation, configuration handling, linting, tests, and CI.
-- No production credentials or live privileged actions.
-
-### Phase 2 — Identity and notifications
-
-- Implement authentication, secure session storage, device management, capabilities, push registration, notification inbox, and deep links.
-
-### Phase 3 — D&D companion
-
-- Add campaign, character, session, notes, dice, and player-safe map experiences.
-- Add bounded encrypted offline support.
-
-### Phase 4 — Operations companion
-
-- Add server health and carefully approved guarded actions.
-- Add scheduler-result visibility without creating or owning schedules.
-
-### Phase 5 — Nexus AI and community
-
-- Add AI service health and advisory review.
-- Add selected community, ticket, event, and announcement surfaces.
-
-### Phase 6 — Hardening and preview readiness
-
-- Complete observability, accessibility, performance, security, privacy, device coverage, and release-candidate validation.
-
-## Dependencies on Khaos Nexus
-
-Mobile implementation depends on approved shared contracts for:
-
-- account authentication and device sessions;
-- capability and permission bootstrap;
-- notification registration and delivery;
-- D&D player-safe projections and bounded mutations;
-- game-server status and command lifecycle;
-- audit-event lookup and action correlation;
-- Nexus AI monitor and advisory projections;
-- API version negotiation and deprecation policy.
-
-Missing contracts must be planned as desktop/backend issues owned by `Khaos-Krew/Khaos-Nexus`; mobile code remains in this repository.
-
-## Key risks
-
-- **Authority duplication:** mitigated by routing every action through existing backend authorities.
-- **Credential leakage:** mitigated by secure storage, short-lived tokens, redaction, secret scanning, and minimal push payloads.
-- **Desktop/mobile contract drift:** mitigated by versioned schemas, contract fixtures, compatibility negotiation, and coordinated release gates.
-- **Offline conflicts:** mitigated by read-only defaults, entity revisions, explicit conflict UI, and narrow queued-action scope.
-- **Notification overload or leakage:** mitigated by preferences, quiet hours, minimal payloads, and detail fetch after authentication.
-- **Unsafe remote control:** mitigated by server-side authorization, step-up confirmation, idempotency, audit records, action expiry, and desktop-only defaults.
-- **Scope expansion:** mitigated by phased issues, WIP limits, one-slice pull requests, and explicit release authorization.
+- #1 Production roadmap
+- #2 Architecture and toolchain
+- #3 Authentication and device sessions
+- #4 Navigation, Home, notifications, and deep links
+- #5 D&D companion and offline support
+- #6 Server monitoring and guarded actions
+- #7 Nexus AI advisory workflows
+- #8 Security, accessibility, observability, and preview gates
+- #9 First installable Android APK
 
 ## Release policy
 
-This repository currently contains planning documentation only. Do not create tags, publish builds, deploy services, upload store artifacts, or push to any mobile release channel without a separate explicit Owner instruction.
-
-A merged feature branch is not a release. Release preparation and publication must use a separately assigned issue, exact commit, validated artifacts, and explicit authorization.
+No tag, GitHub Release, Play Store artifact, deployment, or release channel may be created without separate explicit Owner authorization. The current workflow artifact is an installable debug APK for controlled testing, not a production release.
