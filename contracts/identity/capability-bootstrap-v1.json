@@ -1,0 +1,30 @@
+{
+  "contractVersion": 1,
+  "minimumAppVersionCode": 4,
+  "serverTime": "2026-08-04T22:00:00Z",
+  "expiresAt": "2026-08-04T22:05:00Z",
+  "globalRoles": [
+    "member"
+  ],
+  "campaignRoles": [
+    {
+      "campaignId": "fixture-campaign-1",
+      "role": "player"
+    }
+  ],
+  "capabilities": [
+    "dnd.read",
+    "servers.read",
+    "nexus-ai.read",
+    "notifications.read",
+    "devices.read"
+  ],
+  "featureGates": {
+    "dnd": true,
+    "servers": true,
+    "nexusAi": true,
+    "notifications": true,
+    "guardedActions": false
+  },
+  "auditReference": "fixture-audit-reference"
+}
