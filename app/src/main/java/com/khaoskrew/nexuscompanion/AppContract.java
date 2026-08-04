@@ -5,18 +5,18 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Compile-time boundary for the first Android preview.
+ * Compile-time boundary for the Android preview.
  *
- * The app intentionally contains no live endpoint, credential, scheduler, RCON,
- * Discord, provider, or AI-sidecar authority. Future connected builds must replace
- * this mock capability bootstrap through a separately reviewed shared API contract.
+ * Platform networking and privileged authority remain disabled. Direct preview
+ * builds may use a separately configured, signed HTTPS channel only for user-
+ * approved application updates.
  */
 public final class AppContract {
     public static final int MIN_SUPPORTED_API = 26;
     public static final boolean PREVIEW_MODE = true;
     public static final boolean NETWORK_ENABLED = false;
     public static final boolean PRIVILEGED_ACTIONS_ENABLED = false;
-    public static final String VERSION_LABEL = "0.1.0 Preview";
+    public static final String VERSION_LABEL = "0.2.0 Preview";
 
     public static final List<Destination> DESTINATIONS = Collections.unmodifiableList(Arrays.asList(
         new Destination("home", "Home", "⌂"),
