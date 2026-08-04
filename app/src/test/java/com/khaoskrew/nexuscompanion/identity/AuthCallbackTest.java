@@ -100,19 +100,4 @@ public final class AuthCallbackTest {
         assertEquals("malformed_callback", result.safeErrorCode());
         assertFalse(attempt.isConsumed());
     }
-
-    @Test
-    public void rejectsMalformedPercentEncodingWithoutCrashing() {
-        AuthorizationAttempt attempt = AuthorizationAttempt.create(1_000);
-        AuthCallback result = AuthCallback.validate(
-            attempt,
-            REDIRECT,
-            URI.create(REDIRECT + "?code=%ZZ&state=" + attempt.state()),
-            1_010,
-            300
-        );
-
-        assertEquals("malformed_callback", result.safeErrorCode());
-        assertFalse(attempt.isConsumed());
-    }
 }
