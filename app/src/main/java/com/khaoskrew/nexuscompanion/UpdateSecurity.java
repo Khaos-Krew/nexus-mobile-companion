@@ -50,7 +50,7 @@ public final class UpdateSecurity {
 
     public static void verifyManifestSignature(UpdateManifest manifest, String publicKeyBase64)
         throws GeneralSecurityException {
-        if (publicKeyBase64 == null || publicKeyBase64.isBlank()) {
+        if (isEmpty(publicKeyBase64)) {
             throw new GeneralSecurityException("Update signing key is not configured");
         }
         try {
@@ -75,7 +75,7 @@ public final class UpdateSecurity {
         URI candidateUri = parseHttps(candidateUrl);
         Set<String> allowedHosts = new HashSet<>();
         allowedHosts.add(manifestUri.getHost().toLowerCase(Locale.US));
-        if (configuredHosts != null && !configuredHosts.isBlank()) {
+        if (!isEmpty(configuredHosts)) {
             for (String host : configuredHosts.split(",")) {
                 String normalized = host.trim().toLowerCase(Locale.US);
                 if (!normalized.isEmpty()) {
@@ -96,7 +96,7 @@ public final class UpdateSecurity {
                 throw new GeneralSecurityException("Update URLs must use HTTPS without embedded credentials");
             }
             return uri;
-        } catch (URISyntaxException error) {
+        } catch (URISyntaxException | NullPointerException error) {
             throw new GeneralSecurityException("Update URL is invalid", error);
         }
     }
@@ -179,6 +179,10 @@ public final class UpdateSecurity {
     @SuppressWarnings("deprecation")
     public static long longVersionCode(PackageInfo info) {
         return Build.VERSION.SDK_INT >= 28 ? info.getLongVersionCode() : info.versionCode;
+    }
+
+    private static boolean isEmpty(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     private static String hex(byte[] bytes) {
