@@ -30,6 +30,30 @@ public final class SessionStateMachine {
         return authorizationAttempt;
     }
 
+    /**
+     * Restored tokens never regain capabilities locally. They enter REFRESHING and
+     * must be rotated and reauthorized by the shared backend before protected UI
+     * can become visible.
+     */
+    public synchronized boolean restoreForRefresh(
+        SessionTokens restoredTokens,
+        long nowEpochSeconds,
+        long clockSkewSeconds
+    ) {
+        requireState(SessionState.SIGNED_OUT);
+        Objects.requireNonNull(restoredTokens, "restoredTokens");
+        if (restoredTokens.refreshExpired(nowEpochSeconds, clockSkewSeconds)) {
+            failClosed(SessionState.EXPIRED, "refresh_expired");
+            return false;
+        }
+        tokens = restoredTokens;
+        authorizationAttempt = null;
+        capabilities = CapabilitySet.signedOut();
+        safeErrorCode = null;
+        state = SessionState.REFRESHING;
+        return true;
+    }
+
     public synchronized void completeAuthorization(
         AuthCallback callback,
         SessionTokens newTokens,
