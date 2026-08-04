@@ -1,0 +1,3 @@
+Build marker for the permanent-signing bootstrap APK.
+Version code: 4
+Version name: 0.2.2-preview-debug
