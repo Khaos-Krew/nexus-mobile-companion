@@ -21,9 +21,6 @@ jobs:
     timeout-minutes: 30
     env:
       UPDATE_CHANNEL: preview
-      UPDATE_MANIFEST_URL: ${{ vars.UPDATE_MANIFEST_URL }}
-      UPDATE_ALLOWED_HOSTS: ${{ vars.UPDATE_ALLOWED_HOSTS }}
-      UPDATE_PUBLIC_KEY_B64: ${{ vars.UPDATE_PUBLIC_KEY_B64 }}
       PREVIEW_KEYSTORE_BASE64: ${{ secrets.PREVIEW_KEYSTORE_BASE64 }}
       PREVIEW_KEYSTORE_PASSWORD: ${{ secrets.PREVIEW_KEYSTORE_PASSWORD }}
       PREVIEW_KEY_ALIAS: ${{ secrets.PREVIEW_KEY_ALIAS }}
@@ -74,7 +71,7 @@ jobs:
             echo "stable-preview-key" > artifact/signing-mode.txt
           else
             echo "ephemeral-android-debug-key" > artifact/signing-mode.txt
-            echo "Stable in-place updates require the four PREVIEW_KEYSTORE_* repository secrets." >> artifact/signing-mode.txt
+            echo "The distributed bootstrap is re-signed offline with the permanent preview key." >> artifact/signing-mode.txt
           fi
 
       - name: Validate project and build APK
@@ -85,18 +82,27 @@ jobs:
       - name: Verify APK identity and updater boundary
         shell: bash
         run: |
-          APK="artifact/Khaos-Nexus-Mobile-Companion-0.2.1-preview.apk"
+          APK="artifact/Khaos-Nexus-Mobile-Companion-0.2.2-preview.apk"
           cp app/build/outputs/apk/debug/app-debug.apk "$APK"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | tee artifact/apk-badging.txt
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$APK" | tee artifact/apk-permissions.txt
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee artifact/apk-signing.txt
           grep -q "package: name='com.khaoskrew.nexuscompanion.preview'" artifact/apk-badging.txt
-          grep -q "versionCode='3'" artifact/apk-badging.txt
-          grep -q "versionName='0.2.1-preview-debug'" artifact/apk-badging.txt
+          grep -q "versionCode='4'" artifact/apk-badging.txt
+          grep -q "versionName='0.2.2-preview-debug'" artifact/apk-badging.txt
           grep -q "sdkVersion:'26'" artifact/apk-badging.txt
           grep -q "android.permission.INTERNET" artifact/apk-permissions.txt
           grep -q "android.permission.REQUEST_INSTALL_PACKAGES" artifact/apk-permissions.txt
           sha256sum "$APK" | tee artifact/SHA256SUMS.txt
+
+      - name: Include offline re-signing tools
+        shell: bash
+        run: |
+          mkdir -p artifact/android-signing-tools/lib
+          cp "$ANDROID_HOME/build-tools/36.0.0/apksigner" artifact/android-signing-tools/
+          cp "$ANDROID_HOME/build-tools/36.0.0/lib/apksigner.jar" artifact/android-signing-tools/lib/
+          cp "$ANDROID_HOME/build-tools/36.0.0/zipalign" artifact/android-signing-tools/
+          chmod +x artifact/android-signing-tools/apksigner artifact/android-signing-tools/zipalign
 
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
