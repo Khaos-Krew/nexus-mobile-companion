@@ -23,9 +23,11 @@ public final class RedactedDiagnostics {
         if (message == null || message.trim().isEmpty()) {
             return "No diagnostic detail available";
         }
-        String value = NAMED_SECRET.matcher(message).replaceAll("$1=[REDACTED]");
-        value = BEARER.matcher(value).replaceAll("Bearer [REDACTED]");
+        // Redact a full bearer credential before the named-field pass can consume
+        // only the word "Bearer" and leave the credential behind.
+        String value = BEARER.matcher(message).replaceAll("Bearer [REDACTED]");
         value = JWT.matcher(value).replaceAll("[REDACTED_JWT]");
+        value = NAMED_SECRET.matcher(value).replaceAll("$1=[REDACTED]");
         value = value.replace('\n', ' ').replace('\r', ' ').trim();
         if (value.length() > MAX_MESSAGE_LENGTH) {
             value = value.substring(0, MAX_MESSAGE_LENGTH) + "…";
@@ -52,12 +54,17 @@ public final class RedactedDiagnostics {
         return SAFE_IDENTIFIER.matcher(normalized).matches() ? normalized : normalizedFallback;
     }
 
-    /** Returns true when a string still contains a token-like value after sanitization. */
+    /** Returns true when an unredacted string contains a token-like value. */
     static boolean containsLikelySecret(String value) {
         if (value == null) {
             return false;
         }
-        Matcher named = NAMED_SECRET.matcher(value);
-        return named.find() || BEARER.matcher(value).find() || JWT.matcher(value).find();
+        String withoutMarkers = value
+            .replace("[REDACTED]", "")
+            .replace("[REDACTED_JWT]", "");
+        Matcher named = NAMED_SECRET.matcher(withoutMarkers);
+        return named.find()
+            || BEARER.matcher(withoutMarkers).find()
+            || JWT.matcher(withoutMarkers).find();
     }
 }
