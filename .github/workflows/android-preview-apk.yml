@@ -17,6 +17,15 @@ jobs:
     name: Build installable APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      UPDATE_CHANNEL: preview
+      UPDATE_MANIFEST_URL: ${{ vars.UPDATE_MANIFEST_URL }}
+      UPDATE_ALLOWED_HOSTS: ${{ vars.UPDATE_ALLOWED_HOSTS }}
+      UPDATE_PUBLIC_KEY_B64: ${{ vars.UPDATE_PUBLIC_KEY_B64 }}
+      PREVIEW_KEYSTORE_BASE64: ${{ secrets.PREVIEW_KEYSTORE_BASE64 }}
+      PREVIEW_KEYSTORE_PASSWORD: ${{ secrets.PREVIEW_KEYSTORE_PASSWORD }}
+      PREVIEW_KEY_ALIAS: ${{ secrets.PREVIEW_KEY_ALIAS }}
+      PREVIEW_KEY_PASSWORD: ${{ secrets.PREVIEW_KEY_PASSWORD }}
 
     steps:
       - name: Check out source
@@ -42,20 +51,42 @@ jobs:
           gradle-version: "9.5.0"
           cache-read-only: ${{ github.event_name == 'pull_request' }}
 
+      - name: Prepare optional stable preview signing
+        shell: bash
+        run: |
+          mkdir -p .ci artifact
+          if [ -n "$PREVIEW_KEYSTORE_BASE64" ] \
+            && [ -n "$PREVIEW_KEYSTORE_PASSWORD" ] \
+            && [ -n "$PREVIEW_KEY_ALIAS" ] \
+            && [ -n "$PREVIEW_KEY_PASSWORD" ]; then
+            printf '%s' "$PREVIEW_KEYSTORE_BASE64" | base64 --decode > .ci/preview-signing.jks
+            chmod 600 .ci/preview-signing.jks
+            echo "PREVIEW_KEYSTORE_PATH=$GITHUB_WORKSPACE/.ci/preview-signing.jks" >> "$GITHUB_ENV"
+            echo "stable-preview-key" > artifact/signing-mode.txt
+          else
+            echo "ephemeral-android-debug-key" > artifact/signing-mode.txt
+            echo "Stable in-place updates require the four PREVIEW_KEYSTORE_* repository secrets." >> artifact/signing-mode.txt
+          fi
+
       - name: Validate project and build APK
         shell: bash
         run: |
           gradle --no-daemon --stacktrace clean testDebugUnitTest lintDebug assembleDebug
 
-      - name: Verify APK identity
+      - name: Verify APK identity and updater boundary
         shell: bash
         run: |
-          mkdir -p artifact
-          cp app/build/outputs/apk/debug/app-debug.apk artifact/Khaos-Nexus-Mobile-Companion-0.1.0-preview.apk
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging artifact/Khaos-Nexus-Mobile-Companion-0.1.0-preview.apk | tee artifact/apk-badging.txt
+          APK="artifact/Khaos-Nexus-Mobile-Companion-0.2.0-preview.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | tee artifact/apk-badging.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$APK" | tee artifact/apk-permissions.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee artifact/apk-signing.txt
           grep -q "package: name='com.khaoskrew.nexuscompanion.preview'" artifact/apk-badging.txt
+          grep -q "versionCode='2'" artifact/apk-badging.txt
           grep -q "sdkVersion:'26'" artifact/apk-badging.txt
-          sha256sum artifact/Khaos-Nexus-Mobile-Companion-0.1.0-preview.apk | tee artifact/SHA256SUMS.txt
+          grep -q "android.permission.INTERNET" artifact/apk-permissions.txt
+          grep -q "android.permission.REQUEST_INSTALL_PACKAGES" artifact/apk-permissions.txt
+          sha256sum "$APK" | tee artifact/SHA256SUMS.txt
 
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
