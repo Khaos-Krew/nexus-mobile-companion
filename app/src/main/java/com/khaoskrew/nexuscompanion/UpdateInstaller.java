@@ -58,11 +58,15 @@ public final class UpdateInstaller {
             Intent resultIntent = new Intent(context, UpdateInstallReceiver.class);
             resultIntent.setAction(UpdateInstallReceiver.ACTION_INSTALL_STATUS);
             resultIntent.putExtra(UpdateInstallReceiver.EXTRA_VERSION_NAME, manifest.versionName);
+            int pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT;
+            if (Build.VERSION.SDK_INT >= 31) {
+                pendingIntentFlags |= PendingIntent.FLAG_MUTABLE;
+            }
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
                 sessionId,
                 resultIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE
+                pendingIntentFlags
             );
             IntentSender sender = pendingIntent.getIntentSender();
             session.commit(sender);
