@@ -1,29 +1,20 @@
 # Khaos Nexus Mobile Companion
 
-Khaos Nexus Mobile Companion is the dedicated Android client for the Khaos Nexus platform. This repository is the exclusive home for mobile-only code, CI, planning, pull requests, and future mobile releases.
+Khaos Nexus Mobile Companion is the dedicated Android client for the Khaos Nexus platform. This repository is the exclusive home for mobile-only code, CI, planning, pull requests, APK update-channel files, and future mobile releases.
 
-The Windows desktop application remains in `Khaos-Krew/Khaos-Nexus`. Mobile extends the shared platform; it does not replace the desktop application or duplicate its authority.
+The Windows desktop application remains in `Khaos-Krew/Khaos-Nexus`. Mobile extends the shared platform; it does not replace the desktop app or duplicate its authority.
 
 ## Current implementation
 
-The installable Android preview foundation was introduced through issue #9 and PR #10. Preview `0.2.1` adds adaptive Android safe-area handling through issue #13.
-
-It includes:
+The Android preview includes:
 
 - a native Android application shell;
 - the Khaos Nexus black, charcoal, onyx, ruby, and crimson visual system;
 - Home, D&D, Servers, Nexus AI, Notifications, and Settings destinations;
-- adaptive status-bar, display-cutout, gesture-navigation, and three-button-navigation insets;
-- portrait and landscape safe-area recalculation without cumulative padding;
-- local fixture data for device and usability testing;
-- visibly locked privileged actions;
-- a built-in signed Update Center for direct preview builds;
-- unit tests and Android lint;
-- package, permission, signing, version, and minimum-SDK verification;
-- SHA-256 generation;
-- an installable GitHub Actions APK artifact.
-
-The application still contains no production endpoint, desktop credential, Discord bot token, RCON password, hosting-provider credential, database service-role key, AI token, scheduler, or platform administration authority.
+- adaptive status-bar, display-cutout, gesture-navigation, and three-button-navigation safe areas;
+- a signed, user-confirmed in-app APK Update Center;
+- package, permission, signing, version, minimum-SDK, lint, unit-test, and SHA-256 validation;
+- no production endpoint, desktop credential, Discord bot token, RCON password, provider credential, database service-role key, AI token, scheduler, or platform administration authority.
 
 The approved desktop UI dependency is Khaos Nexus PR #194, merged at commit `0971f81b3264ce66a106a0ace129596e31c5ef62`.
 
@@ -34,9 +25,8 @@ The approved desktop UI dependency is Khaos Nexus PR #194, merged at commit `097
 - JDK 17
 - compile and target API 36
 - minimum API 26 / Android 8.0
-- Java 17 source
-- standard Android platform widgets and Canvas rendering
-- JUnit 4 tests
+- Java 17
+- JUnit 4
 
 ## Build locally
 
@@ -47,188 +37,130 @@ Prerequisites:
 - Android build tools 36.0.0
 - Gradle 9.5.0
 
-Run:
-
 ```bash
 gradle --no-daemon --stacktrace clean testDebugUnitTest lintDebug assembleDebug
 ```
 
-The APK is created at:
+Output:
 
 ```text
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The direct preview package is:
+Direct preview package:
 
 ```text
 com.khaoskrew.nexuscompanion.preview
 ```
 
-The current preview version is:
-
-```text
-versionCode 3
-0.2.1-preview-debug
-```
-
 ## Adaptive mobile layout
 
-Android API 36 enforces edge-to-edge rendering, so fixed bottom margins are not safe across devices.
+`NexusApplication` configures every activity for edge-to-edge rendering and applies live Android safe areas to the content container. It accounts for status bars, display cutouts, side insets, gesture navigation, and three-button navigation. Insets are replaced rather than accumulated after rotation, resume, or navigation-mode changes.
 
-`NexusApplication` configures every activity for edge-to-edge rendering and applies the live Android safe area to the activity content container. The safe area includes:
+## Working in-app APK updates
 
-- status bars;
-- display cutouts and camera notches;
-- left and right system insets;
-- gesture-navigation areas;
-- three-button navigation bars;
-- a small breathing space above the device navigation area.
+Direct signed APK distribution is the primary update path. Google Play is not currently planned.
 
-Insets are reapplied after rotation, activity resume, and system navigation-mode changes. Padding is replaced rather than accumulated, preventing the interface from drifting inward after repeated configuration changes.
+The app checks this durable HTTPS manifest:
 
-## Built-in Update Center
+```text
+https://raw.githubusercontent.com/Khaos-Krew/nexus-mobile-companion/main/updates/preview/update-manifest.json
+```
 
-The direct preview opens through an Update Center that can check a configured signed HTTPS channel before entering the companion.
+The update-manifest RSA public key is embedded in the app and also published at `updates/preview/update-manifest-public.b64`. Private APK-signing and manifest-signing keys are never committed to GitHub.
 
-Metadata checks may happen automatically. APK download and installation never happen automatically. The user must approve:
+### One-time bootstrap
 
-1. download and local verification;
-2. Android's unknown-source setting when required;
-3. Android's final package installation confirmation.
+Existing `0.2.1` and older preview APKs were signed by temporary CI certificates. Android cannot replace those builds with a permanently signed update.
 
-Before the installer opens, the app verifies:
+Install the stable-signed `0.2.2` bootstrap once. After that, later APKs signed with the same permanent preview certificate can replace the installed app through the Update Center.
 
-- HTTPS and allowed hosts;
-- manifest schema and channel;
-- exact package name and newer version code;
-- RSA/SHA-256 manifest signature;
-- signed file size and APK SHA-256;
-- APK package identity and version;
-- replacement APK signing certificate matches the installed app.
+### Update flow
 
-Direct signed APK distribution is the primary update path for the foreseeable future. Google Play distribution is not currently planned. The direct-preview manifest contains `INTERNET` and `REQUEST_INSTALL_PACKAGES` only for the controlled updater flow.
+1. The Update Center checks the signed HTTPS manifest.
+2. The user reviews the available version and release notes.
+3. The user approves download.
+4. The app verifies the manifest signature, channel, host, package, version, signed size, APK SHA-256, APK identity, and signing-certificate continuity.
+5. Android displays its own final installer confirmation.
 
-See [`docs/IN_APP_UPDATES.md`](docs/IN_APP_UPDATES.md) for the manifest contract, signing process, CI variables, stable preview keystore secrets, and rollout controls.
+Automatic download and silent installation are disabled.
 
-## Stable preview signing
+### Channel files
 
-Android only permits an APK to replace an installed app when both use the same signing certificate.
+`updates/preview/` contains:
 
-The workflow supports a stable preview keystore through these repository secrets:
+- `update-manifest.json` — signed metadata for the newest approved APK;
+- `Khaos-Nexus-Mobile-Companion-current.apk` — APK referenced by the manifest;
+- `update-manifest-public.b64` — public manifest-verification key;
+- `README.md` — channel operating procedure.
+
+## Signing-key custody
+
+The permanent preview APK signing keystore and separate update-manifest private key must be retained in at least two encrypted, access-controlled backups.
+
+Losing the APK signing key prevents future builds from replacing the installed preview. Losing the manifest key prevents publication of trusted update metadata. Anyone who obtains either private key and its credentials could impersonate an approved update.
+
+The GitHub workflow supports future stable signing after these repository secrets are configured:
 
 - `PREVIEW_KEYSTORE_BASE64`
 - `PREVIEW_KEYSTORE_PASSWORD`
 - `PREVIEW_KEY_ALIAS`
 - `PREVIEW_KEY_PASSWORD`
 
-When those secrets are absent, CI falls back to an ephemeral Android debug key and records that state in the artifact's `signing-mode.txt`. Ephemeral clean-runner builds are installable but cannot reliably replace one another in place.
+Until those secrets are provisioned, controlled APKs are re-signed offline with the permanent preview key before publication.
 
-The update metadata channel uses separate repository variables:
+See [`docs/IN_APP_UPDATES.md`](docs/IN_APP_UPDATES.md) for the manifest contract and signing procedure.
 
-- `UPDATE_MANIFEST_URL`
-- `UPDATE_ALLOWED_HOSTS`
-- `UPDATE_PUBLIC_KEY_B64`
-
-When no approved manifest URL or public key is configured, the Update Center remains installed but opens the companion without downloading anything.
-
-## APK boundary
-
-The Owner authorized an installable APK and built-in update capability for controlled testing on August 4, 2026.
-
-This does not authorize:
-
-- a GitHub tag or Release;
-- public, enterprise, or website distribution;
-- production or staging deployment;
-- a production signing key;
-- live remote administration;
-- silent or background installation;
-- release-channel publication without separate approval.
-
-GitHub Actions artifacts are temporary and authenticated, so they are not used as the application update channel.
-
-## Product purpose
-
-The companion will provide secure, focused access to selected Khaos Nexus capabilities away from the Windows desktop:
-
-- monitoring and notifications;
-- lightweight review and approval;
-- D&D table support;
-- read-only server health;
-- explicitly authorized guarded actions;
-- Nexus AI health and advisory review.
-
-The desktop application remains the primary administration surface for credentials, complex setup, service supervision, scheduler authoring, release management, and high-risk operations.
-
-## Architecture boundaries
+## Product and architecture boundaries
 
 ### Mobile responsibilities
 
-- Render mobile-optimized views.
-- Respect Android safe areas and device navigation modes.
-- Authenticate through an approved system-browser PKCE flow.
-- Maintain a revocable device session in platform secure storage.
+- Render mobile-optimized views and respect Android safe areas.
+- Authenticate through an approved system-browser PKCE flow when live services are introduced.
+- Maintain a revocable device session in secure storage.
 - Request bounded, role-filtered projections.
-- Cache only explicitly approved non-secret data.
-- Submit actions and approvals through authoritative backend APIs.
-- Display action status, audit references, conflicts, expiry, and retryable failures.
-- Check and install only cryptographically verified updates after explicit user approval.
+- Cache only approved non-secret data.
+- Submit guarded actions through authoritative backend APIs.
+- Check and install only cryptographically verified APK updates after explicit user approval.
 
 ### Shared platform responsibilities
 
-Khaos Nexus desktop and backend services continue to own:
-
-- protected credentials;
-- Discord interactions and registered bots;
-- shared scheduler execution;
-- game-server adapters and commands;
-- AI runtimes and provider access;
-- campaign authority and permission checks;
-- audit and notification routing;
-- production release publication.
+Khaos Nexus desktop and backend services continue to own protected credentials, Discord bots and interactions, the shared scheduler, game-server adapters, AI runtimes, campaign authority, permissions, auditing, and production release publication.
 
 ### Prohibited mobile behavior
 
 - Direct RCON, hosting-provider, Discord, database service-role, or AI-sidecar connections.
-- Embedded desktop credentials, bot tokens, server passwords, provider keys, or AI tokens.
-- A second scheduler, AI router, Discord bot, notification engine, or permission model.
+- Embedded privileged credentials or tokens.
+- A duplicate scheduler, AI router, Discord bot, notification engine, or permission model.
 - Background autonomous administration.
-- Silent execution of maintenance, AI proposals, or application installation.
+- Silent maintenance, AI execution, or APK installation.
 
-## Planned phases
+## Roadmap
 
-1. **Android preview foundation** — installable shell, adaptive safe areas, and signed Update Center.
-2. **Authentication and device sessions** — PKCE, secure storage, registration, capabilities, and revocation.
-3. **Home, notifications, and deep links** — shared notification registration and safe detail retrieval.
-4. **D&D read-only and offline** — player-safe projections and encrypted bounded cache.
-5. **Server status and guarded actions** — server-side authorization, confirmation, idempotency, expiry, and audit.
-6. **Nexus AI review** — health, findings, and advisory plan review only.
-7. **Hardening** — accessibility, observability, security, performance, and real-device coverage.
-8. **Release preparation** — only after separate explicit Owner authorization.
+1. Android preview foundation, safe areas, and signed Update Center.
+2. Authentication and revocable device sessions.
+3. Home, notifications, and deep links.
+4. D&D read-only and encrypted bounded offline support.
+5. Server status and guarded actions.
+6. Nexus AI health and advisory review.
+7. Accessibility, observability, security, performance, and real-device hardening.
+8. Broader distribution only after separate Owner authorization.
 
 ## Repository workflow
 
 - All mobile branches and pull requests target this repository's `main` branch.
 - Mobile-only code must not be added to `Khaos-Krew/Khaos-Nexus`.
-- Production Control assigns an issue, exact starting commit, branch, dependencies, and release boundary.
-- Pull requests remain focused on one vertical slice and include tests and documentation.
-- Missing shared APIs are tracked with the appropriate desktop/backend owner, while mobile implementation remains here.
+- Work starts from an assigned issue and exact commit.
+- Pull requests remain focused and include tests and documentation.
+- APK channel publication requires an increased version code, permanent APK signature, signed manifest, hash verification, and an install-over-previous-version test.
 
-## Planning and implementation issues
+## Key issues
 
-- #1 Production roadmap
-- #2 Architecture and toolchain
-- #3 Authentication and device sessions
-- #4 Navigation, Home, notifications, and deep links
-- #5 D&D companion and offline support
-- #6 Server monitoring and guarded actions
-- #7 Nexus AI advisory workflows
-- #8 Security, accessibility, observability, and preview gates
 - #9 First installable Android APK
 - #11 Canonical APK artifact from `main`
 - #13 Android system navigation and safe-area correction
+- #15 Stable in-app APK updates
 
 ## Release policy
 
-No tag, GitHub Release, public deployment, or release channel may be created without separate explicit Owner authorization. The current APK is a controlled-testing artifact, not a production release.
+No GitHub Release, Google Play upload, public deployment, or alternate release channel may be created without separate explicit Owner authorization. The repository-hosted preview update channel is limited to controlled direct APK testing.
