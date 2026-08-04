@@ -34,8 +34,8 @@ android {
         applicationId = "com.khaoskrew.nexuscompanion"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.2.0-preview"
+        versionCode = 3
+        versionName = "0.2.1-preview"
 
         buildConfigField("String", "UPDATE_MANIFEST_URL", updateManifestUrl.asBuildConfigString())
         buildConfigField("String", "UPDATE_PUBLIC_KEY_B64", updatePublicKey.asBuildConfigString())
