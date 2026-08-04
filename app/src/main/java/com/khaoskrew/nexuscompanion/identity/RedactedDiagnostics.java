@@ -42,7 +42,7 @@ public final class RedactedDiagnostics {
     }
 
     public static String safeIdentifier(String value, String fallback) {
-        String normalizedFallback = fallback == null || fallback.isBlank()
+        String normalizedFallback = fallback == null || fallback.trim().isEmpty()
             ? "unknown"
             : fallback.toLowerCase(Locale.US);
         if (value == null) {
