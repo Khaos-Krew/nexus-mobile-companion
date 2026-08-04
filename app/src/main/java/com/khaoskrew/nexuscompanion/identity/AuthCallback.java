@@ -45,7 +45,13 @@ public final class AuthCallback {
             return rejected("authorization_expired");
         }
 
-        Map<String, String> parameters = queryParameters(callbackUri);
+        final Map<String, String> parameters;
+        try {
+            parameters = queryParameters(callbackUri);
+        } catch (IllegalArgumentException error) {
+            return rejected("malformed_callback");
+        }
+
         String callbackState = parameters.get("state");
         if (!attempt.consumeState(callbackState)) {
             return rejected(attempt.isConsumed() ? "state_replayed" : "state_mismatch");
@@ -114,14 +120,18 @@ public final class AuthCallback {
             return Collections.emptyMap();
         }
         Map<String, String> values = new LinkedHashMap<>();
-        for (String pair : rawQuery.split("&")) {
+        for (String pair : rawQuery.split("&", -1)) {
+            if (pair.isEmpty()) {
+                throw new IllegalArgumentException("Empty callback parameter");
+            }
             int separator = pair.indexOf('=');
             String rawName = separator >= 0 ? pair.substring(0, separator) : pair;
             String rawValue = separator >= 0 ? pair.substring(separator + 1) : "";
             String name = decode(rawName);
-            if (!values.containsKey(name)) {
-                values.put(name, decode(rawValue));
+            if (name.isEmpty() || values.containsKey(name)) {
+                throw new IllegalArgumentException("Duplicate or empty callback parameter");
             }
+            values.put(name, decode(rawValue));
         }
         return Collections.unmodifiableMap(values);
     }
