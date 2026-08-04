@@ -14,9 +14,13 @@ The Android preview includes:
 - adaptive status-bar, display-cutout, gesture-navigation, and three-button-navigation safe areas;
 - a signed, user-confirmed in-app APK Update Center;
 - package, permission, signing, version, minimum-SDK, lint, unit-test, and SHA-256 validation;
+- Phase 2 identity primitives for PKCE, one-time callback state, callback replay protection, fail-closed session states, encrypted Android Keystore persistence, capability gates, and redacted diagnostics;
+- versioned mock identity and capability fixtures for development before live backend contracts are approved;
 - no production endpoint, desktop credential, Discord bot token, RCON password, provider credential, database service-role key, AI token, scheduler, or platform administration authority.
 
 The approved desktop UI dependency is Khaos Nexus PR #194, merged at commit `0971f81b3264ce66a106a0ace129596e31c5ef62`.
+
+Phase 1 is complete under issue #2. Phase 2 identity and device sessions are active under issue #3 on `feature/auth-device-session`.
 
 ## Android toolchain
 
@@ -56,6 +60,27 @@ com.khaoskrew.nexuscompanion.preview
 ## Adaptive mobile layout
 
 `NexusApplication` configures every activity for edge-to-edge rendering and applies live Android safe areas to the content container. It accounts for status bars, display cutouts, side insets, gesture navigation, and three-button navigation. Insets are replaced rather than accumulated after rotation, resume, or navigation-mode changes.
+
+## Identity and device sessions
+
+The mobile app is a public OAuth client and never embeds a client secret.
+
+The Phase 2 foundation includes:
+
+- authorization-code PKCE using `S256`;
+- cryptographically random verifier and one-time state generation;
+- exact callback redirect, expiry, state, and replay validation;
+- deterministic signed-out, authorizing, active, refreshing, revoked, expired, incompatible, and recoverable-error states;
+- restored sessions entering refresh-only state with no protected capabilities;
+- strict refresh-token rotation counter handling;
+- Android Keystore AES-256-GCM storage with only ciphertext and IV in private preferences;
+- capability-driven protected destinations and guarded-action separation;
+- redaction for OAuth fields, bearer credentials, JWT-like values, device IDs, and subject IDs;
+- mock-only contract fixtures in `contracts/identity/`.
+
+The client remains disconnected from live identity endpoints until Khaos Nexus provides reviewed mobile-safe authorization, exchange, refresh, device, capability, and security-event contracts. Missing backend contracts are not replaced by direct Discord, database, provider, RCON, scheduler, or AI access.
+
+See [`docs/IDENTITY_AND_DEVICE_SESSIONS.md`](docs/IDENTITY_AND_DEVICE_SESSIONS.md) for the trust model, backend contract, state machine, storage design, capability mapping, tests, and live-integration gates.
 
 ## Working in-app APK updates
 
@@ -117,29 +142,29 @@ See [`docs/IN_APP_UPDATES.md`](docs/IN_APP_UPDATES.md) for the manifest contract
 
 - Render mobile-optimized views and respect Android safe areas.
 - Authenticate through an approved system-browser PKCE flow when live services are introduced.
-- Maintain a revocable device session in secure storage.
-- Request bounded, role-filtered projections.
+- Maintain a revocable device session in Android Keystore-backed encrypted storage.
+- Request bounded, role-filtered capability projections.
 - Cache only approved non-secret data.
 - Submit guarded actions through authoritative backend APIs.
 - Check and install only cryptographically verified APK updates after explicit user approval.
 
 ### Shared platform responsibilities
 
-Khaos Nexus desktop and backend services continue to own protected credentials, Discord bots and interactions, the shared scheduler, game-server adapters, AI runtimes, campaign authority, permissions, auditing, and production release publication.
+Khaos Nexus desktop and backend services continue to own protected credentials, Discord bots and interactions, the shared scheduler, game-server adapters, AI runtimes, campaign authority, permissions, auditing, device-session authority, and production release publication.
 
 ### Prohibited mobile behavior
 
 - Direct RCON, hosting-provider, Discord, database service-role, or AI-sidecar connections.
-- Embedded privileged credentials or tokens.
-- A duplicate scheduler, AI router, Discord bot, notification engine, or permission model.
+- Embedded privileged credentials, tokens, or client secrets.
+- A duplicate scheduler, AI router, Discord bot, notification engine, device authority, or permission model.
 - Background autonomous administration.
 - Silent maintenance, AI execution, or APK installation.
 
 ## Roadmap
 
-1. Android preview foundation, safe areas, and signed Update Center.
-2. Authentication and revocable device sessions.
-3. Home, notifications, and deep links.
+1. **Complete:** Android preview foundation, safe areas, and signed Update Center.
+2. **Active:** Authentication, capability bootstrap, encrypted sessions, and revocable devices.
+3. Home, notifications, push registration, and deep links.
 4. D&D read-only and encrypted bounded offline support.
 5. Server status and guarded actions.
 6. Nexus AI health and advisory review.
@@ -152,10 +177,13 @@ Khaos Nexus desktop and backend services continue to own protected credentials, 
 - Mobile-only code must not be added to `Khaos-Krew/Khaos-Nexus`.
 - Work starts from an assigned issue and exact commit.
 - Pull requests remain focused and include tests and documentation.
+- Missing shared contracts are recorded as Khaos Nexus backend dependencies; the mobile app does not bypass them.
 - APK channel publication requires an increased version code, permanent APK signature, signed manifest, hash verification, and an install-over-previous-version test.
 
 ## Key issues
 
+- #2 Mobile architecture and toolchain — completed
+- #3 Authentication, devices, permissions, and secure sessions — active
 - #9 First installable Android APK
 - #11 Canonical APK artifact from `main`
 - #13 Android system navigation and safe-area correction
@@ -163,4 +191,4 @@ Khaos Nexus desktop and backend services continue to own protected credentials, 
 
 ## Release policy
 
-No GitHub Release, Google Play upload, public deployment, or alternate release channel may be created without separate explicit Owner authorization. The repository-hosted preview update channel is limited to controlled direct APK testing.
+No GitHub Release, Google Play upload, public deployment, production endpoint, or alternate release channel may be created without separate explicit Owner authorization. The repository-hosted preview update channel is limited to controlled direct APK testing.
