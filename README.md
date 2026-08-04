@@ -13,56 +13,37 @@ It includes:
 - a native Android application shell;
 - the Khaos Nexus black, charcoal, onyx, ruby, and crimson visual system;
 - Home, D&D, Servers, Nexus AI, Notifications, and Settings destinations;
-- original launcher and background graphics;
-- local fixture data for device, layout, and usability testing;
+- local fixture data for device and usability testing;
 - visibly locked privileged actions;
+- a built-in signed Update Center for direct preview builds;
 - unit tests and Android lint;
-- package and minimum-SDK verification;
+- package, permission, signing, version, and minimum-SDK verification;
 - SHA-256 generation;
-- an installable GitHub Actions debug APK artifact.
+- an installable GitHub Actions APK artifact.
 
-The preview is deliberately offline. It requests no Android network permission and contains no production endpoint, desktop credential, Discord bot token, RCON password, hosting-provider credential, database service-role key, AI token, scheduler, updater, or release signing key.
+The application still contains no production endpoint, desktop credential, Discord bot token, RCON password, hosting-provider credential, database service-role key, AI token, scheduler, or platform administration authority.
 
 The approved desktop UI dependency is Khaos Nexus PR #194, merged at commit `0971f81b3264ce66a106a0ace129596e31c5ef62`.
 
-## APK boundary
-
-The Owner authorized creation of an installable APK on August 4, 2026. This authorization covers a debug-signed APK for controlled direct testing.
-
-It does not authorize:
-
-- a GitHub tag or Release;
-- Play Store, Firebase, enterprise, or website distribution;
-- production or staging deployment;
-- a production signing key;
-- live remote administration;
-- mobile updater or release-channel publication.
-
-Android may require the tester to allow installation from the application used to open the APK. The preview package is separate from any future production package and can be removed normally through Android settings.
-
 ## Android toolchain
 
-The preview uses a dependency-light native Android stack:
-
-- Android Gradle Plugin 9.3.0;
-- Gradle 9.5.0;
-- JDK 17;
-- Android compile and target API 36;
-- minimum API 26 / Android 8.0;
-- Java 17 source;
-- standard Android platform widgets and Canvas rendering;
-- JUnit 4 tests.
-
-API 36 is used because it is available from the stable Android SDK channel on the clean GitHub Actions runner. See `docs/ADR-0001-native-android-preview.md` for the architecture and security decision.
+- Android Gradle Plugin 9.3.0
+- Gradle 9.5.0
+- JDK 17
+- compile and target API 36
+- minimum API 26 / Android 8.0
+- Java 17 source
+- standard Android platform widgets and Canvas rendering
+- JUnit 4 tests
 
 ## Build locally
 
 Prerequisites:
 
-- JDK 17;
-- Android SDK platform 36;
-- Android build tools 36.0.0;
-- Gradle 9.5.0.
+- JDK 17
+- Android SDK platform 36
+- Android build tools 36.0.0
+- Gradle 9.5.0
 
 Run:
 
@@ -70,32 +51,78 @@ Run:
 gradle --no-daemon --stacktrace clean testDebugUnitTest lintDebug assembleDebug
 ```
 
-The local APK is created at:
+The APK is created at:
 
 ```text
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The debug package identifier is:
+The direct preview package is:
 
 ```text
 com.khaoskrew.nexuscompanion.preview
 ```
 
-## GitHub Actions APK
+## Built-in Update Center
 
-Pull requests to `main` run `.github/workflows/android-preview-apk.yml`.
+The direct preview opens through an Update Center that can check a configured signed HTTPS channel before entering the companion.
 
-The workflow:
+Metadata checks may happen automatically. APK download and installation never happen automatically. The user must approve:
 
-1. installs JDK 17, Android API 36, build tools 36.0.0, and Gradle 9.5.0;
-2. runs unit tests and Android lint;
-3. assembles the debug APK;
-4. verifies package identity and minimum SDK with `aapt`;
-5. generates `SHA256SUMS.txt`;
-6. uploads `Khaos-Nexus-Mobile-Companion-APK` as a temporary workflow artifact.
+1. download and local verification;
+2. Android's unknown-source setting when required;
+3. Android's final package installation confirmation.
 
-The workflow does not create a tag, GitHub Release, deployment, or store upload.
+Before the installer opens, the app verifies:
+
+- HTTPS and allowed hosts;
+- manifest schema and channel;
+- exact package name and newer version code;
+- RSA/SHA-256 manifest signature;
+- signed file size and APK SHA-256;
+- APK package identity and version;
+- replacement APK signing certificate matches the installed app.
+
+The `debug` manifest alone includes `INTERNET` and `REQUEST_INSTALL_PACKAGES`. A future Google Play build must use Google Play's in-app update mechanism and must not merge the direct-preview package-install permission.
+
+See [`docs/IN_APP_UPDATES.md`](docs/IN_APP_UPDATES.md) for the manifest contract, signing process, CI variables, stable preview keystore secrets, and rollout controls.
+
+## Stable preview signing
+
+Android only permits an APK to replace an installed app when both use the same signing certificate.
+
+The workflow supports a stable preview keystore through these repository secrets:
+
+- `PREVIEW_KEYSTORE_BASE64`
+- `PREVIEW_KEYSTORE_PASSWORD`
+- `PREVIEW_KEY_ALIAS`
+- `PREVIEW_KEY_PASSWORD`
+
+When those secrets are absent, CI falls back to an ephemeral Android debug key and records that state in the artifact's `signing-mode.txt`. Ephemeral clean-runner builds are installable but cannot reliably replace one another in place.
+
+The update metadata channel uses separate repository variables:
+
+- `UPDATE_MANIFEST_URL`
+- `UPDATE_ALLOWED_HOSTS`
+- `UPDATE_PUBLIC_KEY_B64`
+
+When no approved manifest URL or public key is configured, the Update Center remains installed but opens the companion without downloading anything.
+
+## APK boundary
+
+The Owner authorized an installable APK and built-in update capability for controlled testing on August 4, 2026.
+
+This does not authorize:
+
+- a GitHub tag or Release;
+- Play Store, Firebase, enterprise, or website distribution;
+- production or staging deployment;
+- a production signing key;
+- live remote administration;
+- silent or background installation;
+- release-channel publication without separate approval.
+
+GitHub Actions artifacts are temporary and authenticated, so they are not used as the application update channel.
 
 ## Product purpose
 
@@ -110,34 +137,6 @@ The companion will provide secure, focused access to selected Khaos Nexus capabi
 
 The desktop application remains the primary administration surface for credentials, complex setup, service supervision, scheduler authoring, release management, and high-risk operations.
 
-## Navigation
-
-### Home
-
-Health summaries, pending approvals, upcoming activity, security state, and quick destinations.
-
-### D&D
-
-Campaigns, characters, sessions, encounters, maps, dice, notes, and reviewed AI-assisted proposals. The preview displays local fixtures only.
-
-### Servers
-
-Read-only previews for ARK, Palworld, Minecraft, and future approved modules. Mobile will never connect directly to RCON or hosting providers.
-
-### Nexus AI
-
-Separate D&D AI and Nexus AI Core health and review surfaces. The mobile app will not host an AI runtime or execute AI-generated maintenance automatically.
-
-### Notifications
-
-A safe actionable inbox. Future push payloads must be minimal and non-secret; authorized details are fetched only after authentication.
-
-### Settings
-
-Account, device sessions, notifications, privacy, security, diagnostics, accessibility, and build information.
-
-When connectivity is implemented, navigation visibility will be derived from authenticated capabilities rather than hardcoded privilege assumptions.
-
 ## Architecture boundaries
 
 ### Mobile responsibilities
@@ -149,6 +148,7 @@ When connectivity is implemented, navigation visibility will be derived from aut
 - Cache only explicitly approved non-secret data.
 - Submit actions and approvals through authoritative backend APIs.
 - Display action status, audit references, conflicts, expiry, and retryable failures.
+- Check and install only cryptographically verified updates after explicit user approval.
 
 ### Shared platform responsibilities
 
@@ -161,30 +161,19 @@ Khaos Nexus desktop and backend services continue to own:
 - AI runtimes and provider access;
 - campaign authority and permission checks;
 - audit and notification routing;
-- updater and release publication.
+- production release publication.
 
 ### Prohibited mobile behavior
 
 - Direct RCON, hosting-provider, Discord, database service-role, or AI-sidecar connections.
 - Embedded desktop credentials, bot tokens, server passwords, provider keys, or AI tokens.
-- A second scheduler, AI router, Discord bot, notification engine, updater, or permission model.
+- A second scheduler, AI router, Discord bot, notification engine, or permission model.
 - Background autonomous administration.
-- Silent execution of maintenance or AI proposals.
+- Silent execution of maintenance, AI proposals, or application installation.
 
-## Offline behavior
+## Planned phases
 
-The current preview is fully offline. Future offline support remains intentionally limited:
-
-- encrypted and size-bounded cache;
-- read-only by default;
-- visible stale timestamps and connection state;
-- no secrets, raw audit payloads, protected GM data, or hidden Discord data;
-- server revisions for conflict handling;
-- explicit cache clearing and device revocation.
-
-## Planned modules and phases
-
-1. **Android preview foundation** — installable offline shell, completed by PR #10.
+1. **Android preview foundation** — installable shell and signed Update Center.
 2. **Authentication and device sessions** — PKCE, secure storage, registration, capabilities, and revocation.
 3. **Home, notifications, and deep links** — shared notification registration and safe detail retrieval.
 4. **D&D read-only and offline** — player-safe projections and encrypted bounded cache.
@@ -192,19 +181,6 @@ The current preview is fully offline. Future offline support remains intentional
 6. **Nexus AI review** — health, findings, and advisory plan review only.
 7. **Hardening** — accessibility, observability, security, performance, and real-device coverage.
 8. **Release preparation** — only after separate explicit Owner authorization.
-
-## Testing and release gates
-
-Before any broader preview or production release:
-
-- exact source and dependency baselines are recorded;
-- unit, contract, integration, UI, lint, accessibility, and security checks pass;
-- no protected credential enters the bundle, logs, diagnostics, notifications, analytics, or backups;
-- authentication, revocation, offline deletion, deep links, push behavior, upgrades, and failure recovery pass real-device testing;
-- shared API compatibility is verified against an approved Khaos Nexus baseline;
-- signing, release notes, hashes, rollback, and distribution channel receive explicit approval.
-
-A merged branch or successful APK workflow artifact is not a public release.
 
 ## Repository workflow
 
@@ -228,4 +204,4 @@ A merged branch or successful APK workflow artifact is not a public release.
 
 ## Release policy
 
-No tag, GitHub Release, Play Store artifact, deployment, or release channel may be created without separate explicit Owner authorization. The current APK is a debug-signed controlled-testing artifact, not a production release.
+No tag, GitHub Release, Play Store artifact, deployment, or release channel may be created without separate explicit Owner authorization. The current APK is a controlled-testing artifact, not a production release.
