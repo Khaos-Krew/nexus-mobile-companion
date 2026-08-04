@@ -18,11 +18,25 @@ jobs:
           ref: release/preview-0.2.3-update
           fetch-depth: 0
 
-      - name: Reconstruct and verify signed APK
+      - name: Diagnose staged chunks
         shell: bash
         run: |
           set -euo pipefail
           test -f updates/staging/READY
+          for file in updates/staging/chunk-*.b64; do
+            echo "--- $file"
+            wc -c "$file"
+            sha256sum "$file"
+            if LC_ALL=C grep -n '[^A-Za-z0-9+/=]' "$file"; then
+              echo "invalid characters found in $file"
+            fi
+            tr -d '\n\r' < "$file" | base64 --decode > /dev/null || echo "invalid base64 in $file"
+          done
+
+      - name: Reconstruct and verify signed APK
+        shell: bash
+        run: |
+          set -euo pipefail
           OUTPUT="updates/preview/Khaos-Nexus-Mobile-Companion-current.apk"
           cat updates/staging/chunk-*.b64 | tr -d '\n\r' | base64 --decode > "$OUTPUT"
           echo "393418fd9e53ca91d9ffadbc64bd863acab270aaf0cd2994fe85db409d5abed1  $OUTPUT" | sha256sum --check --strict
