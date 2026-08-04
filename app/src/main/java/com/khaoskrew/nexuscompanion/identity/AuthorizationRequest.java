@@ -1,5 +1,6 @@
 package com.khaoskrew.nexuscompanion.identity;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -83,7 +84,12 @@ public final class AuthorizationRequest {
     }
 
     private static String encode(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
+        try {
+            return URLEncoder.encode(value, StandardCharsets.UTF_8.name())
+                .replace("+", "%20");
+        } catch (UnsupportedEncodingException impossible) {
+            throw new IllegalStateException("UTF-8 is unavailable", impossible);
+        }
     }
 
     @Override
