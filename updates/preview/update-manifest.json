@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "channel": "preview",
+  "packageName": "com.khaoskrew.nexuscompanion.preview",
+  "versionCode": 5,
+  "versionName": "0.2.3-preview-debug",
+  "publishedAt": "2026-08-04T18:25:30Z",
+  "apkUrl": "https://raw.githubusercontent.com/Khaos-Krew/nexus-mobile-companion/main/updates/preview/Khaos-Nexus-Mobile-Companion-current.apk",
+  "sha256": "393418fd9e53ca91d9ffadbc64bd863acab270aaf0cd2994fe85db409d5abed1",
+  "sizeBytes": 86794,
+  "mandatory": false,
+  "releaseNotes": "Adds permanent signed in-app APK updates and keeps the adaptive Android safe-area layout.",
+  "signature": "NjtX2GuFuYZzPmRgrLC0TJ7va6ZzbPqnDoVaxyrY51QZSXrn8h5XLcx0wZ1hX6jMQmzQ4o2SNuzfzC8M8pH4jDe7mWfToZTrpvvTt3hGQyQ6I/ZRJz4N2sAJrTYRxk1noD2ZpFk1xtWiU+JlV5GNKFW92AOfS2gxTcrHhdbX0Ebo8/S3Hjzl6h+Myon6lR7tQwVIKSn/BVXDdWkBmi44M9eYWAwOlSdQrNlqbhe4jtRmItdZzGZPtUfpkH5H5r8ay8M6CyFShXF2HeexsLAER42AUjC/6qvdy4BOEwwQaWz3EXUeDUfkTuE/ujuDvroxgB8ZNV1qYWFsiGVayp5Fm3gqN7yNgAj7zpyc7uyvkFesYLq63Bdi2+DY5fREpQrR0QwZ+CcVmgPP5pvRZg16JfP0o7qnfiEMnJJQ4yKKaUTkXvvnRLgq4QhCEtuqz1YXxkqGFJT3oKQvnVteAVQ4GJYA9FDr2IlWNBS37bnY5ZQKcMlafLKFkcBygvW+mNyS"
+}
