@@ -15,7 +15,7 @@ public final class AppContract {
     public static final boolean PREVIEW_MODE = true;
     public static final boolean NETWORK_ENABLED = false;
     public static final boolean PRIVILEGED_ACTIONS_ENABLED = false;
-    public static final String VERSION_LABEL = "0.2.2 Stable Update Bootstrap";
+    public static final String VERSION_LABEL = "0.2.3 In-App Update";
 
     public static final List<Destination> DESTINATIONS = Collections.unmodifiableList(Arrays.asList(
         new Destination("home", "Home", "⌂"),
