@@ -4,13 +4,13 @@ plugins {
 
 android {
     namespace = "com.khaoskrew.nexuscompanion"
-    compileSdk = 37
+    compileSdk = 36
     enableKotlin = false
 
     defaultConfig {
         applicationId = "com.khaoskrew.nexuscompanion"
         minSdk = 26
-        targetSdk = 37
+        targetSdk = 36
         versionCode = 1
         versionName = "0.1.0-preview"
     }
